@@ -288,6 +288,15 @@ const disableAnimation = () => {
     }, 1)
   }
 }
+export const useMounted = () => {
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  return isMounted
+}
 
 const getSystemTheme = (e?: MediaQueryList) => {
   if (!e) {

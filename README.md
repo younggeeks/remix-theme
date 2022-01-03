@@ -1,58 +1,59 @@
-# next-themes ![next-themes minzip package size](https://img.shields.io/bundlephobia/minzip/next-themes) ![Version](https://img.shields.io/npm/v/next-themes.svg?colorB=green)
+# remix-theme ![remix-theme minzip package size](https://img.shields.io/bundlephobia/minzip/remix-theme) ![Version](https://img.shields.io/npm/v/remix-theme.svg?colorB=green)
 
-An abstraction for themes in your Next.js app.
+An abstraction for themes in your Remix.run app. (Based on https://github.com/pacocoursey/next-themes)
 
-- ✅ Perfect dark mode in 2 lines of code
 - ✅ System setting with prefers-color-scheme
 - ✅ Themed browser UI with color-scheme
 - ✅ No flash on load (both SSR and SSG)
 - ✅ Sync theme across tabs and windows
 - ✅ Disable flashing when changing themes
-- ✅ Force pages to specific themes
+- ❌ Force pages to specific themes
 - ✅ Class or data attribute selector
+- ✅ `useMounted` hook
 - ✅ `useTheme` hook
 
-Check out the [Live Example](https://next-themes-example.vercel.app/) to try it for yourself.
+Check out the [Live Example](https://remix-theme-example.vercel.app/) to try it for yourself.
 
 ## Install
 
 ```bash
-$ npm install next-themes
+$ npm install remix-theme
 # or
-$ yarn add next-themes
+$ yarn add remix-theme
 ```
 
 ## Use
 
-You'll need a [Custom `App`](https://nextjs.org/docs/advanced-features/custom-app) to use next-themes. The simplest `_app` looks like this:
-
-```js
-// pages/_app.js
-
-function MyApp({ Component, pageProps }) {
-  return <Component {...pageProps} />
-}
-
-export default MyApp
-```
-
 Adding dark mode support takes 2 lines of code:
 
 ```js
-import { ThemeProvider } from 'next-themes'
 
-function MyApp({ Component, pageProps }) {
+import { ThemeProvider } from "remix-theme";
+
+export default function App() {
   return (
-    <ThemeProvider>
-      <Component {...pageProps} />
-    </ThemeProvider>
-  )
+    `<ThemeProvider attribute="class">`
+      <html lang="en">
+        <head>
+          <meta charSet="utf-8" />
+          <meta name="viewport" content="width=device-width,initial-scale=1" />
+          <Meta />
+          <Links />
+        </head>
+        <body className="max-w-screen-lg mx-auto dark:bg-gray-900 bg-white transition duration-500">
+          <Outlet />
+          <ScrollRestoration />
+          <Scripts />
+          {process.env.NODE_ENV === "development" && <LiveReload />}
+        </body>
+      </html>
+    `</ThemeProvider>`
+  );
 }
 
-export default MyApp
 ```
 
-That's it, your Next.js app fully supports dark mode, including System preference with `prefers-color-scheme`. The theme is also immediately synced between tabs. By default, next-themes modifies the `data-theme` attribute on the `html` element, which you can easily use to style your app:
+That's it, your Remix.run app fully supports dark mode, including System preference with `prefers-color-scheme`. The theme is also immediately synced between tabs. By default, remix-theme modifies the `data-theme` attribute on the `html` element, which you can easily use to style your app:
 
 ```css
 :root {
@@ -72,7 +73,7 @@ That's it, your Next.js app fully supports dark mode, including System preferenc
 Your UI will need to know the current theme and be able to change it. The `useTheme` hook provides theme information:
 
 ```js
-import { useTheme } from 'next-themes'
+import { useTheme } from 'remix-theme'
 
 const ThemeChanger = () => {
   const { theme, setTheme } = useTheme()
@@ -101,7 +102,7 @@ All your theme configuration is passed to ThemeProvider.
 
 - `storageKey = 'theme'`: Key used to store theme setting in localStorage
 - `defaultTheme = 'system'`: Default theme name (for v0.0.12 and lower the default was `light`). If `enableSystem` is false, the default theme is `light`
-- `forcedTheme`: Forced theme name for the current page (does not modify saved theme settings)
+- ❌ `forcedTheme`: Forced theme name for the current page (does not modify saved theme settings)
 - `enableSystem = true`: Whether to switch between `dark` and `light` based on `prefers-color-scheme`
 - `enableColorScheme = true`: Whether to indicate to browsers which color scheme is used (dark or light) for built-in UI like inputs and buttons
 - `disableTransitionOnChange = false`: Optionally disable all CSS transitions when switching themes ([example](#disable-transitions-on-theme-change))
@@ -126,7 +127,7 @@ Not too bad, right? Let's see how to use these properties with examples:
 
 ## Examples
 
-The [Live Example](https://next-themes-example.vercel.app/) shows next-themes in action, with dark, light, system themes and pages with forced themes.
+The [Live Example](https://remix-theme-example.vercel.app/) shows remix-theme in action, with dark, light, system themes and pages with forced themes.
 
 ### Use System preference by default
 
@@ -146,7 +147,7 @@ If you don't want a System theme, disable it via `enableSystem`:
 
 ### Class instead of data attribute
 
-If your Next.js app uses a class to style the page based on the theme, change the attribute prop to `class`:
+If your Remix.run app uses a class to style the page based on the theme, change the attribute prop to `class`:
 
 ```js
 <ThemeProvider attribute="class">
@@ -156,7 +157,7 @@ Now, setting the theme to "dark" will set `class="dark"` on the `html` element.
 
 ### Force page to a theme
 
-Let's say your cool new marketing page is dark mode only. The page should always use the dark theme, and changing the theme should have no effect. To force a theme on your Next.js pages, simply set a variable on the page component:
+Let's say your cool new marketing page is dark mode only. The page should always use the dark theme, and changing the theme should have no effect. To force a theme on your Remix.run pages, simply set a variable on the page component:
 
 ```js
 // pages/awesome-page.js
@@ -181,6 +182,7 @@ function MyApp({ Component, pageProps }) {
 Done! Your page is always dark theme (regardless of user preference), and calling `setTheme` from `useTheme` is now a no-op. However, you should make sure to disable any of your UI that would normally change the theme:
 
 ```js
+//Not yet supported
 const { forcedTheme } = useTheme()
 
 // Theme is forced, we shouldn't allow user to change the theme
@@ -222,7 +224,7 @@ document.documentElement.getAttribute('data-theme')
 
 ### More than light and dark mode
 
-next-themes is designed to support any number of themes! Simply pass a list of themes:
+remix-theme is designed to support any number of themes! Simply pass a list of themes:
 
 ```js
 <ThemeProvider themes={['pink', 'red', 'blue']}>
@@ -256,36 +258,6 @@ body {
 
 Next Themes is completely CSS independent, it will work with any library. For example, with Styled Components you just need to `createGlobalStyle` in your custom App:
 
-```js
-// pages/_app.js
-import { createGlobalStyle } from 'styled-components'
-import { ThemeProvider } from 'next-themes'
-
-// Your themeing variables
-const GlobalStyle = createGlobalStyle`
-  :root {
-    --fg: #000;
-    --bg: #fff;
-  }
-
-  [data-theme="dark"] {
-    --fg: #fff;
-    --bg: #000;
-  }
-`
-
-function MyApp({ Component, pageProps }) {
-  return (
-    <>
-      <GlobalStyle />
-      <ThemeProvider>
-        <Component {...pageProps} />
-      </ThemeProvider>
-    </>
-  )
-}
-```
-
 ### Avoid Hydration Mismatch
 
 Because we cannot know the `theme` on the server, many of the values returned from `useTheme` will be `undefined` until mounted on the client. This means if you try to render UI based on the current theme before mounting on the client, you will see a hydration mismatch error.
@@ -293,7 +265,7 @@ Because we cannot know the `theme` on the server, many of the values returned fr
 The following code sample is **unsafe**:
 
 ```js
-import { useTheme } from 'next-themes'
+import { useTheme } from 'remix-theme'
 
 const ThemeChanger = () => {
   const { theme, setTheme } = useTheme()
@@ -311,14 +283,12 @@ const ThemeChanger = () => {
 To fix this, make sure you only render UI that uses the current theme when the page is mounted on the client:
 
 ```js
-import { useTheme } from 'next-themes'
+import { useTheme, useMounted } from 'remix-theme'
 
 const ThemeChanger = () => {
-  const [mounted, setMounted] = useState(false)
   const { theme, setTheme } = useTheme()
 
-  // When mounted on client, now we can show the UI
-  useEffect(() => setMounted(true), [])
+  const mounted = useMounted()
 
   if (!mounted) return null
 
@@ -332,37 +302,9 @@ const ThemeChanger = () => {
 }
 ```
 
-To avoid [Layout Shift](https://web.dev/cls/), consider rendering a skeleton/placeholder until mounted on the client side.
-
-For example, with [`next/image`](https://nextjs.org/docs/basic-features/image-optimization) you can use an empty image until the theme is resolved.
-
-```js
-import Image from 'next/image'
-import { useTheme } from 'next-themes'
-
-function ThemedImage() {
-  const { resolvedTheme } = useTheme()
-  let src
-
-  switch (resolvedTheme) {
-    case 'light':
-      src = '/light.png'
-      break
-    case 'dark':
-      src = '/dark.png'
-      break
-    default:
-      src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'
-      break
-  }
-
-  return <Image src={src} width={400} height={400} />
-}
-```
-
 ### With Tailwind
 
-[Visit the live example](https://next-themes-tailwind.vercel.app) • [View the example source code](https://github.com/pacocoursey/next-themes/tree/master/examples/tailwind)
+[Visit the live example](https://remix-theme-tailwind.vercel.app) • [View the example source code](https://github.com/pacocoursey/remix-theme/tree/master/examples/tailwind)
 
 > NOTE! Tailwind only supports dark mode in version >2.
 
@@ -378,7 +320,7 @@ module.exports = {
 Set the attribute for your Theme Provider to class:
 
 ```js
-// pages/_app.js
+
 <ThemeProvider attribute="class">
 ```
 
@@ -402,7 +344,7 @@ ThemeProvider automatically injects a script into `next/head` to update the `htm
 
 **Why is my page still flashing?**
 
-In Next.js dev mode, the page may still flash. When you build your app in production mode, there will be no flashing.
+In Remix.run dev mode, the page may still flash. When you build your app in production mode, there will be no flashing.
 
 ---
 
