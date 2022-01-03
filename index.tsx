@@ -4,10 +4,8 @@ import React, {
   useContext,
   useEffect,
   useState,
-  useRef,
-  memo
+  useRef
 } from 'react'
-import NextHead from 'next/head'
 
 export interface UseThemeProps {
   /** List of all available theme names */
@@ -113,6 +111,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
         const d = document.documentElement
 
         if (attribute === 'class') {
+          console.log('atrribute is class', name)
           d.classList.remove(...attrs)
           d.classList.add(name)
         } else {
@@ -185,55 +184,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({
     document.documentElement.style.setProperty('color-scheme', colorScheme)
   }, [enableColorScheme, theme, resolvedTheme, forcedTheme])
 
-  return (
-    <ThemeContext.Provider
-      value={{
-        theme,
-        setTheme,
-        forcedTheme,
-        resolvedTheme: theme === 'system' ? resolvedTheme : theme,
-        themes: enableSystem ? [...themes, 'system'] : themes,
-        systemTheme: (enableSystem ? resolvedTheme : undefined) as
-          | 'light'
-          | 'dark'
-          | undefined
-      }}
-    >
-      <ThemeScript
-        {...{
-          forcedTheme,
-          storageKey,
-          attribute,
-          value,
-          enableSystem,
-          defaultTheme,
-          attrs
-        }}
-      />
-      {children}
-    </ThemeContext.Provider>
-  )
-}
-
-const ThemeScript = memo(
-  ({
-    forcedTheme,
-    storageKey,
-    attribute,
-    enableSystem,
-    defaultTheme,
-    value,
-    attrs
-  }: {
-    forcedTheme?: string
-    storageKey: string
-    attribute?: string
-    enableSystem?: boolean
-    defaultTheme: string
-    value?: ValueObject
-    attrs: any
-  }) => {
-    // Code-golfing the amount of characters in the script
+  useEffect(() => {
     const optimization = (() => {
       if (attribute === 'class') {
         const removeClasses = `d.remove(${attrs
@@ -259,44 +210,52 @@ const ThemeScript = memo(
 
     const defaultSystem = defaultTheme === 'system'
 
-    return (
-      <NextHead>
-        {forcedTheme ? (
-          <script
-            key="next-themes-script"
-            dangerouslySetInnerHTML={{
-              // These are minified via Terser and then updated by hand, don't recommend
-              // prettier-ignore
-              __html: `!function(){${optimization}${updateDOM(forcedTheme)}}()`
-            }}
-          />
-        ) : enableSystem ? (
-          <script
-            key="next-themes-script"
-            dangerouslySetInnerHTML={{
-              // prettier-ignore
-              __html: `!function(){try {${optimization}var e=localStorage.getItem('${storageKey}');${!defaultSystem ? updateDOM(defaultTheme) + ';' : ''}if("system"===e||(!e&&${defaultSystem})){var t="${MEDIA}",m=window.matchMedia(t);m.media!==t||m.matches?${updateDOM('dark')}:${updateDOM('light')}}else if(e) ${value ? `var x=${JSON.stringify(value)};` : ''}${updateDOM(value ? 'x[e]' : 'e', true)}}catch(e){}}()`
-            }}
-          />
-        ) : (
-          <script
-            key="next-themes-script"
-            dangerouslySetInnerHTML={{
-              // prettier-ignore
-              __html: `!function(){try{${optimization}var e=localStorage.getItem("${storageKey}");if(e){${value ? `var x=${JSON.stringify(value)};` : ''}${updateDOM(value ? 'x[e]' : 'e', true)}}else{${updateDOM(defaultTheme)};}}catch(t){}}();`
-            }}
-          />
-        )}
-      </NextHead>
-    )
-  },
-  (prevProps, nextProps) => {
-    // Only re-render when forcedTheme changes
-    // the rest of the props should be completely stable
-    if (prevProps.forcedTheme !== nextProps.forcedTheme) return false
-    return true
-  }
-)
+    if (forcedTheme) {
+      document.head.innerHTML =
+        ` <script type="text/javascript">!function(){${optimization}${updateDOM(
+          forcedTheme
+        )}}()</script>` + document.head.innerHTML
+    }
+    if (enableSystem) {
+      document.head.innerHTML =
+        `<script type="text/javascript">!function(){try {${optimization}var e=localStorage.getItem('${storageKey}');${
+          !defaultSystem ? updateDOM(defaultTheme) + ';' : ''
+        }if("system"===e||(!e&&${defaultSystem})){var t="${MEDIA}",m=window.matchMedia(t);m.media!==t||m.matches?${updateDOM(
+          'dark'
+        )}:${updateDOM('light')}}else if(e) ${
+          value ? `var x=${JSON.stringify(value)};` : ''
+        }${updateDOM(value ? 'x[e]' : 'e', true)}}catch(e){}}()</script>` +
+        document.head.innerHTML
+    } else {
+      document.head.innerHTML =
+        `<script type="text/javascript">!function(){try{${optimization}var e=localStorage.getItem("${storageKey}");if(e){${
+          value ? `var x=${JSON.stringify(value)};` : ''
+        }${updateDOM(value ? 'x[e]' : 'e', true)}}else{${updateDOM(
+          defaultTheme
+        )};}}catch(t){}}();</script>` + document.head.innerHTML
+    }
+
+    changeTheme(theme)
+  }, [theme])
+
+  return (
+    <ThemeContext.Provider
+      value={{
+        theme,
+        setTheme,
+        forcedTheme,
+        resolvedTheme: theme === 'system' ? resolvedTheme : theme,
+        themes: enableSystem ? [...themes, 'system'] : themes,
+        systemTheme: (enableSystem ? resolvedTheme : undefined) as
+          | 'light'
+          | 'dark'
+          | undefined
+      }}
+    >
+      {children}
+    </ThemeContext.Provider>
+  )
+}
 
 // Helpers
 const getTheme = (key: string, fallback?: string) => {
